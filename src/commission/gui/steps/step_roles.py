@@ -15,6 +15,7 @@ class StepRoles(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self._role_names: list[str] = []
+        self._checkboxes: list[QCheckBox] = []
         self._init_ui()
 
     def _init_ui(self) -> None:

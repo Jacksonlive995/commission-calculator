@@ -338,3 +338,16 @@ class TestPlatformViewingRole:
         )
         names = [s.name for s in result.agent_shares]
         assert "张三" not in names
+
+    def test_seller_platform_role_in_my_roles_ignored(self):
+        # 房源方视角误传 my_roles=["平台实勘"]：平台角色被入口防御剔除，
+        # 我方份额应为 0，且平台角色不会分给业务员
+        result = calc_seller_commission(
+            property_type=SALE,
+            total_amount=10000,
+            my_roles=["平台实勘"],
+            agent_roles={"平台实勘": "张三"},
+        )
+        assert result.my_share == 0.0
+        names = [s.name for s in result.agent_shares]
+        assert "张三" not in names

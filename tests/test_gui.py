@@ -86,3 +86,11 @@ def test_buyer_result_marks_platform_role(qapp):
     text = StepResult()._format_buyer(result)
     assert "平台实勘 300.00（平台收取）" in text
     assert "平台实勘 300.00（它店）" not in text
+
+
+def test_step_roles_get_state_before_setup(qapp):
+    """setup 之前调用 get_state 不应崩溃，返回空 my_roles。"""
+    from commission.gui.steps.step_roles import StepRoles
+
+    sr = StepRoles()
+    assert sr.get_state() == {"my_roles": []}
