@@ -10,6 +10,7 @@ from commission.calculator import (
 from commission.config import (
     PAYMENT_OPTIONS,
     PAYMENT_RATES,
+    PLATFORM_ROLES,
     RENTAL,
     RENTAL_ROLES,
     SALE,
@@ -221,7 +222,8 @@ def main() -> None:
     print("房源类型：")
     type_idx = _choose("请选择", ["租赁", "买卖"])
     property_type = RENTAL if type_idx == 0 else SALE
-    role_names = list(RENTAL_ROLES.keys() if property_type == RENTAL else SALE_ROLES.keys())
+    all_roles = RENTAL_ROLES if property_type == RENTAL else SALE_ROLES
+    role_names = [r for r in all_roles if r not in PLATFORM_ROLES]
 
     # 2. 选择视角
     print("\n计算视角：")

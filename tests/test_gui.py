@@ -58,3 +58,16 @@ class TestAgentSplitBox:
 
         assert text.count("┌") == 1
         assert text.count("└") == 1
+
+
+def test_sale_role_checkboxes_exclude_platform(qapp):
+    """买卖角色勾选列表不应包含平台实勘，但保留其它门店角色。"""
+    from commission.gui.steps.step_roles import StepRoles
+
+    sr = StepRoles()
+    sr.setup({"property_type": SALE, "view": "buyer"})
+
+    labels = [cb.text() for cb in sr._checkboxes]
+    assert all("平台实勘" not in label for label in labels)
+    assert any("录入人" in label for label in labels)
+    assert "平台实勘" not in sr._role_names

@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from commission.config import RENTAL, RENTAL_ROLES, SALE_ROLES
+from commission.config import PLATFORM_ROLES, RENTAL, RENTAL_ROLES, SALE_ROLES
 
 
 class StepRoles(QWidget):
@@ -49,7 +49,7 @@ class StepRoles(QWidget):
         property_type = type_state["property_type"]
         is_buyer = type_state["view"] == "buyer"
         roles = RENTAL_ROLES if property_type == RENTAL else SALE_ROLES
-        self._role_names = list(roles.keys())
+        self._role_names = [r for r in roles if r not in PLATFORM_ROLES]
 
         # 清除旧复选框
         while self._cb_layout.count():
@@ -63,8 +63,8 @@ class StepRoles(QWidget):
             self.lbl_hint.setText("本店业务员拥有哪些房源方角色？")
 
         self._checkboxes: list[QCheckBox] = []
-        for role, rate in roles.items():
-            pct = int(rate * 100)
+        for role in self._role_names:
+            pct = int(roles[role] * 100)
             cb = QCheckBox(f"{role}（{pct}%）")
             self._cb_layout.addWidget(cb)
             self._checkboxes.append(cb)
