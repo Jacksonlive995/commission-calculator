@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from commission.calculator import BuyerCommissionResult, SellerCommissionResult
-from commission.config import PAYMENT_RATES, RENTAL, RENTAL_ROLES, SALE_ROLES
+from commission.config import PAYMENT_RATES, PLATFORM_ROLES, RENTAL, RENTAL_ROLES, SALE_ROLES
 
 
 class StepResult(QWidget):
@@ -70,7 +70,12 @@ class StepResult(QWidget):
         for side, detail in [("业主", r.owner_detail), ("客户", r.customer_detail)]:
             lines.append(f"  {side}方：")
             for role, share in detail.role_shares.items():
-                mark = "（本店）" if role in r.my_roles else "（它店）"
+                if role in PLATFORM_ROLES:
+                    mark = "（平台收取）"
+                elif role in r.my_roles:
+                    mark = "（本店）"
+                else:
+                    mark = "（它店）"
                 lines.append(f"   {role} {f(share)}{mark}")
 
         lines += [

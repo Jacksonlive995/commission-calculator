@@ -71,3 +71,18 @@ def test_sale_role_checkboxes_exclude_platform(qapp):
     assert all("平台实勘" not in label for label in labels)
     assert any("录入人" in label for label in labels)
     assert "平台实勘" not in sr._role_names
+
+
+def test_buyer_result_marks_platform_role(qapp):
+    """买卖成交人结果中，平台实勘应标注（平台收取），而非（它店）。"""
+    result = calc_buyer_commission(
+        property_type=SALE,
+        owner_amount=10000,
+        owner_payment_method="微信扫码",
+        customer_amount=10000,
+        customer_payment_method="微信扫码",
+        my_roles=[],
+    )
+    text = StepResult()._format_buyer(result)
+    assert "平台实勘 300.00（平台收取）" in text
+    assert "平台实勘 300.00（它店）" not in text

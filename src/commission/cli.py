@@ -150,7 +150,12 @@ def _show_buyer_result(r: BuyerCommissionResult) -> None:
     for side, detail in [("业主", r.owner_detail), ("客户", r.customer_detail)]:
         print(f"    {side}方：")
         for role, share in detail.role_shares.items():
-            owner_mark = "（本店）" if role in r.my_roles else "（它店）"
+            if role in PLATFORM_ROLES:
+                owner_mark = "（平台收取）"
+            elif role in r.my_roles:
+                owner_mark = "（本店）"
+            else:
+                owner_mark = "（它店）"
             print(f"      {role}  {_fmt_money(share)}{owner_mark}")
 
     # Step 3
