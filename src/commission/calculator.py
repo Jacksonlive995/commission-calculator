@@ -11,6 +11,7 @@ from commission.config import (
     AGENT_COMMISSION_RATE,
     BEIKE_PLATFORM_RATE,
     PAYMENT_RATES,
+    PLATFORM_ROLES,
     RENTAL,
     RENTAL_ROLES,
     SALE_ROLES,
@@ -184,6 +185,7 @@ def calc_buyer_commission(
                  例如 {"录入人": "张三", "维护人": "李四"}
                  成交人角色（客源成交人）会自动分配给名为"成交人"的业务员。
     """
+    my_roles = [r for r in my_roles if r not in PLATFORM_ROLES]
     result = BuyerCommissionResult(
         property_type=property_type,
         owner_amount=owner_amount,
@@ -262,6 +264,7 @@ def calc_seller_commission(
     agent_roles: 角色→业务员姓名映射，用于拆分各业务员应发佣金。
                  例如 {"录入人": "张三", "维护人": "李四"}
     """
+    my_roles = [r for r in my_roles if r not in PLATFORM_ROLES]
     result = SellerCommissionResult(
         property_type=property_type,
         total_amount=total_amount,

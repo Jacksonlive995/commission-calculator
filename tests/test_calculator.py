@@ -305,3 +305,36 @@ class TestBuyerAgentShares:
         )
         assert len(result.agent_shares) == 1
         assert result.agent_shares[0].commission == 46.0
+
+
+class TestPlatformViewingRole:
+    """平台实勘是平台角色，永不属门店：
+    即便误传进 my_roles，也不应被算作我方或分给业务员。
+    """
+
+    def test_platform_role_in_my_roles_ignored(self):
+        # 误传 my_roles=["平台实勘"]，成交人份额应仍为 5970（平台 3% 不归成交人）
+        result = calc_buyer_commission(
+            property_type=SALE,
+            owner_amount=10000,
+            owner_payment_method="微信扫码",
+            customer_amount=10000,
+            customer_payment_method="微信扫码",
+            my_roles=["平台实勘"],
+        )
+        assert result.owner_received == 5970.0
+        assert result.total_received == 11940.0
+
+    def test_platform_role_not_assigned_to_agent(self):
+        # 误把平台实勘指派给业务员，agent_shares 不应包含该业务员
+        result = calc_buyer_commission(
+            property_type=SALE,
+            owner_amount=10000,
+            owner_payment_method="微信扫码",
+            customer_amount=10000,
+            customer_payment_method="微信扫码",
+            my_roles=["平台实勘"],
+            agent_roles={"平台实勘": "张三"},
+        )
+        names = [s.name for s in result.agent_shares]
+        assert "张三" not in names
