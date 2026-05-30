@@ -78,8 +78,8 @@ class TestBuyerCommissionSale:
     """买卖成交人视角
 
     条件：业主微信扫码10000，客户微信扫码10000
-    角色：录入人(10%)、维护人(15%)、实勘人(2%)、钥匙人(5%)、证件人(5%) 全部属于其他门店
-    成交人占 60%，另有3%平台实勘
+    角色：录入(10%)、维护(15%)、实勘(2%)、平台实勘(3%)、钥匙(5%)、证件(5%) 全属其他门店/平台
+    成交人占 60%
     """
 
     def setup_method(self):
@@ -102,27 +102,29 @@ class TestBuyerCommissionSale:
         assert d.role_shares["录入人"] == 1000.0
         assert d.role_shares["维护人"] == 1500.0
         assert d.role_shares["实勘人"] == 200.0
+        assert d.role_shares["平台实勘"] == 300.0
         assert d.role_shares["钥匙人"] == 500.0
         assert d.role_shares["证件人"] == 500.0
 
-    def test_platform_viewing_fee(self):
-        assert self.result.owner_detail.platform_viewing_fee == 300.0
-        assert self.result.customer_detail.platform_viewing_fee == 300.0
+    def test_platform_role_share(self):
+        # 平台实勘 3% 现作为角色出现在 role_shares 中（替代原 platform_viewing_fee 字段）
+        assert self.result.owner_detail.role_shares["平台实勘"] == 300.0
+        assert self.result.customer_detail.role_shares["平台实勘"] == 300.0
 
     def test_buyer_received(self):
-        # 10000 - 30 - 1000 - 1500 - 200 - 500 - 500 = 6270
-        assert self.result.owner_received == 6270.0
-        assert self.result.customer_received == 6270.0
-        assert self.result.total_received == 12540.0
+        # 10000 - 30 - (1000+1500+200+300+500+500=4000) = 5970
+        assert self.result.owner_received == 5970.0
+        assert self.result.customer_received == 5970.0
+        assert self.result.total_received == 11940.0
 
     def test_beike_fee(self):
-        assert self.result.beike_fee == 1003.2
+        assert self.result.beike_fee == 955.2
 
     def test_store_income(self):
-        assert self.result.store_income == 11536.8
+        assert self.result.store_income == 10984.8
 
     def test_agent_commission(self):
-        assert self.result.agent_commission == 5768.4
+        assert self.result.agent_commission == 5492.4
 
 
 class TestBuyerCommissionRentalAllRoles:

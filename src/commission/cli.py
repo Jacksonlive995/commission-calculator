@@ -151,8 +151,6 @@ def _show_buyer_result(r: BuyerCommissionResult) -> None:
         for role, share in detail.role_shares.items():
             owner_mark = "（本店）" if role in r.my_roles else "（它店）"
             print(f"      {role}  {_fmt_money(share)}{owner_mark}")
-        if detail.platform_viewing_fee > 0:
-            print(f"      平台实勘  {_fmt_money(detail.platform_viewing_fee)}（平台收取）")
 
     # Step 3
     print(f"\n  Step 3  成交人实收佣金")

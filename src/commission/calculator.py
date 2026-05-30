@@ -13,8 +13,6 @@ from commission.config import (
     PAYMENT_RATES,
     RENTAL,
     RENTAL_ROLES,
-    SALE,
-    SALE_PLATFORM_VIEWING_RATE,
     SALE_ROLES,
 )
 
@@ -40,7 +38,6 @@ class PaymentDetail:
     payment_method: str = ""
     payment_fee: float = 0.0
     role_shares: dict[str, float] = field(default_factory=dict)
-    platform_viewing_fee: float = 0.0
     buyer_share: float = 0.0
 
 
@@ -219,10 +216,6 @@ def calc_buyer_commission(
             detail.role_shares[role] = share
             if role not in my_roles:
                 other_store_shares += share
-
-        # 平台实勘费（仅买卖），由平台直接收取，不从成交人份额中扣除
-        if property_type == SALE:
-            detail.platform_viewing_fee = round(amount * SALE_PLATFORM_VIEWING_RATE, 2)
 
         # 成交人份额
         detail.buyer_share = round(amount - payment_fee - other_store_shares, 2)

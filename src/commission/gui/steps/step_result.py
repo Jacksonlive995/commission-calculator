@@ -72,8 +72,6 @@ class StepResult(QWidget):
             for role, share in detail.role_shares.items():
                 mark = "（本店）" if role in r.my_roles else "（它店）"
                 lines.append(f"   {role} {f(share)}{mark}")
-            if detail.platform_viewing_fee > 0:
-                lines.append(f"   平台实勘 {f(detail.platform_viewing_fee)}（平台收取）")
 
         lines += [
             "",
