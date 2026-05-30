@@ -3,17 +3,13 @@
 from PySide6.QtWidgets import (
     QCheckBox,
     QFormLayout,
-    QHBoxLayout,
-    QLabel,
     QLineEdit,
-    QPushButton,
     QRadioButton,
     QButtonGroup,
     QVBoxLayout,
     QWidget,
 )
 
-from commission.config import RENTAL, RENTAL_ROLES, SALE, SALE_ROLES
 
 
 class StepSplit(QWidget):

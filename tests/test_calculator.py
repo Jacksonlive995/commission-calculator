@@ -5,7 +5,6 @@
 
 from commission.config import RENTAL, SALE
 from commission.calculator import (
-    AgentShare,
     calc_buyer_commission,
     calc_payment_fee,
     calc_seller_commission,

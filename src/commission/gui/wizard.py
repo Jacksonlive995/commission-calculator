@@ -127,7 +127,6 @@ class CommissionWizard(QMainWindow):
 
     def _run_calculation(self) -> None:
         from commission.calculator import calc_buyer_commission, calc_seller_commission
-        from commission.config import RENTAL
 
         ts = self.step_type.get_state()
         ps = self.step_payment.get_state()

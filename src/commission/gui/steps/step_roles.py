@@ -1,7 +1,6 @@
 """Step 3: 角色归属"""
 
 from PySide6.QtWidgets import (
-    QButtonGroup,
     QCheckBox,
     QLabel,
     QPushButton,
@@ -9,7 +8,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from commission.config import RENTAL, RENTAL_ROLES, SALE, SALE_ROLES
+from commission.config import RENTAL, RENTAL_ROLES, SALE_ROLES
 
 
 class StepRoles(QWidget):

@@ -1,11 +1,9 @@
 """Step 2: 支付信息"""
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QFormLayout,
-    QHBoxLayout,
     QLabel,
     QVBoxLayout,
     QWidget,

@@ -3,7 +3,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
-    QLabel,
     QPushButton,
     QTextEdit,
     QVBoxLayout,
@@ -150,5 +149,5 @@ class StepResult(QWidget):
             lines.append(f" │ {s.name}（{role_str} = {pct}%）")
             lines.append(f" │  份额 {f(s.my_share)} - 德佑 {f(s.beike_fee)} = 进店 {f(s.store_income)}")
             lines.append(f" │  应发佣金: {f(s.commission)} 元")
-            lines.append(f" └──────────────────────────────────────────")
+        lines.append(f" └──────────────────────────────────────────")
         return lines

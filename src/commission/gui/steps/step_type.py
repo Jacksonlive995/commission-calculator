@@ -1,6 +1,5 @@
 """Step 1: 房源类型 + 计算视角"""
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QButtonGroup,
     QLabel,
