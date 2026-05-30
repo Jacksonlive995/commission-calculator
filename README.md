@@ -54,11 +54,19 @@ uv sync
 
 ## 使用
 
+### 命令行
+
 ```bash
 uv run commission
 ```
 
-交互流程：
+### 图形界面
+
+```bash
+uv run commission-gui
+```
+
+交互流程（CLI / GUI 通用）：
 1. 选择房源类型（租赁/买卖）
 2. 选择计算视角（成交人/房源方）
 3. 输入支付金额和方式（数字快捷选择）

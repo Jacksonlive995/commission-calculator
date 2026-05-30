@@ -7,13 +7,14 @@ authors = [
     { name = "chavez-2023", email = "apchat2023@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["pyside6>=6.6"]
 
 [dependency-groups]
 dev = ["pytest>=8.0"]
 
 [project.scripts]
 commission = "commission.cli:main"
+commission-gui = "commission.gui.app:main"
 
 [tool.uv]
 package = true
