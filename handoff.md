@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-房产中介佣金计算命令行工具。业务场景：成交一套房源后，需要计算平台分账和业务员应发佣金。计算涉及6步流程，且角色组合多变，手动计算易出错。
+房产中介佣金计算工具（CLI + GUI）。业务场景：成交一套房源后，需要计算平台分账和业务员应发佣金。计算涉及6步流程，且角色组合多变，手动计算易出错。
 
 ## 已完成功能
 
@@ -37,6 +37,15 @@
 ### 图形界面GUI（gui/）
 
 PySide6 实现的向导式桌面应用，5步导航：① 房源类型 → ② 支付信息 → ③ 角色归属 → ④ 拆分设置 → ⑤ 结果。支持实时平台费预览、一键复制结果。CLI入口和GUI入口独立，calculator.py 未做任何修改。
+
+文件结构：
+- `gui/app.py` — GUI入口，创建 QApplication 和主窗口
+- `gui/wizard.py` — 向导主窗口，QStackedWidget 步骤导航，上一步/下一步按钮控制
+- `gui/steps/step_type.py` — 房源类型（租赁/买卖）+ 计算视角（成交人/房源方）
+- `gui/steps/step_payment.py` — 支付金额输入 + 支付方式下拉 + 实时费率预览；房源方视角只显示一个总额输入
+- `gui/steps/step_roles.py` — 角色复选框列表 + 全部本店/全部它店快捷按钮
+- `gui/steps/step_split.py` — 拆分开关 + 同一人/逐个指定 + 姓名输入
+- `gui/steps/step_result.py` — 格式化结果展示（与CLI输出一致）+ 复制按钮
 
 ### 配置常量（config.py）
 
@@ -77,5 +86,6 @@ PySide6 实现的向导式桌面应用，5步导航：① 房源类型 → ② �
 
 ```bash
 uv run commission       # 启动交互式CLI
+uv run commission-gui   # 启动图形界面
 uv run pytest -v        # 运行测试
 ```

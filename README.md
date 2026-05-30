@@ -1,6 +1,6 @@
 # 佣金计算器
 
-房产中介佣金计算命令行工具。输入房源信息、支付金额和角色归属，自动完成6步分账计算并输出每笔明细。
+房产中介佣金计算工具（CLI + 图形界面）。输入房源信息、支付金额和角色归属，自动完成6步分账计算并输出每笔明细。
 
 ## 功能
 
@@ -11,6 +11,7 @@
 - 买卖房源3%平台实勘费自动处理，不参与分账
 - 成交人兼任房源方角色时自动调整占比
 - 8种支付方式的快捷选择
+- PySide6 图形界面（向导式5步导航，实时费率预览，一键复制结果）
 
 ## 业务规则
 
@@ -77,23 +78,33 @@ uv run commission-gui
 ## 开发
 
 ```bash
-uv run pytest            # 运行测试（26个用例）
-uv run pytest -v         # 详细输出
-uv run python -m commission  # 等同于 uv run commission
+uv run pytest          # 运行测试（26个用例）
+uv run pytest -v       # 详细输出
+uv run python -m commission  # CLI入口
+uv run commission-gui       # GUI入口
 ```
 
 ## 项目结构
 
 ```
 cw-project/
-├── pyproject.toml              # 项目配置
-├── cw-project.md               # 业务需求文档
+├── pyproject.toml          # 项目配置
+├── cw-project.md           # 业务需求文档
 ├── src/commission/
 │   ├── __init__.py
-│   ├── config.py               # 费率、角色比例等常量
-│   ├── calculator.py           # 纯计算逻辑（无IO）
-│   └── cli.py                  # 交互式命令行入口
+│   ├── config.py           # 费率、角色比例等常量
+│   ├── calculator.py       # 纯计算逻辑（无IO）
+│   ├── cli.py              # 交互式命令行入口
+│   └── gui/                # PySide6 图形界面
+│       ├── app.py          # GUI入口
+│       ├── wizard.py       # 向导主窗口
+│       └── steps/          # 各步骤页面
+│           ├── step_type.py     # 房源类型+视角
+│           ├── step_payment.py  # 支付信息
+│           ├── step_roles.py    # 角色归属
+│           ├── step_split.py    # 拆分设置
+│           └── step_result.py   # 结果展示
 └── tests/
     ├── __init__.py
-    └── test_calculator.py      # 计算逻辑单元测试
+    └── test_calculator.py  # 计算逻辑单元测试
 ```
