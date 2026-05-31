@@ -112,6 +112,89 @@ def _calc_buyer_role_rate(property_type: str, my_roles: list[str]) -> float:
     return 1.0 - other_store_rate
 
 
+def _single_total_share(total_share: float, roles: dict[str, float], my_roles: list[str]) -> list[AgentShare]:
+    return [AgentShare(
+        name="",
+        roles=my_roles[:],
+        role_rate=sum(rate for role, rate in roles.items() if role in my_roles),
+        my_share=total_share,
+        beike_fee=0.0,
+        store_income=total_share,
+        commission=round(total_share * AGENT_COMMISSION_RATE, 2),
+    )]
+
+
+def _shares_from_role_amounts(
+    role_shares_in_store: dict[str, float],
+    role_rates: dict[str, float],
+    agent_roles: dict[str, str],
+) -> list[AgentShare]:
+    agent_map: dict[str, list[str]] = {}
+    for role, name in agent_roles.items():
+        if role in role_shares_in_store:
+            agent_map.setdefault(name, []).append(role)
+
+    shares: list[AgentShare] = []
+    for name, role_list in agent_map.items():
+        my_share = round(sum(role_shares_in_store[role] for role in role_list), 2)
+        shares.append(AgentShare(
+            name=name,
+            roles=role_list,
+            role_rate=sum(role_rates[role] for role in role_list),
+            my_share=my_share,
+            beike_fee=0.0,
+            store_income=my_share,
+            commission=round(my_share * AGENT_COMMISSION_RATE, 2),
+        ))
+    return shares
+
+
+def calc_buyer_agent_shares(
+    property_type: str,
+    my_roles: list[str],
+    agent_roles: dict[str, str] | None,
+    store_income: float,
+    buyer_rate: float,
+    buyer_received: float,
+    total_amount: float,
+) -> list[AgentShare]:
+    roles = _get_roles(property_type)
+    if not agent_roles:
+        return _single_total_share(store_income, roles, my_roles)
+
+    role_rates: dict[str, float] = dict(roles)
+    role_rates["客源成交人"] = buyer_rate
+
+    role_shares_in_store: dict[str, float] = {}
+    my_role_gross = 0.0
+    for role in my_roles:
+        gross = round(total_amount * role_rates[role], 2)
+        my_role_gross += gross
+        role_shares_in_store[role] = round(gross * (1 - BEIKE_PLATFORM_RATE), 2)
+
+    buyer_gross = round(buyer_received - my_role_gross, 2)
+    role_shares_in_store["客源成交人"] = round(buyer_gross * (1 - BEIKE_PLATFORM_RATE), 2)
+    return _shares_from_role_amounts(role_shares_in_store, role_rates, agent_roles)
+
+
+def calc_seller_agent_shares(
+    property_type: str,
+    my_roles: list[str],
+    agent_roles: dict[str, str] | None,
+    store_income: float,
+) -> list[AgentShare]:
+    roles = _get_roles(property_type)
+    if not agent_roles:
+        return _single_total_share(store_income, roles, my_roles)
+
+    my_rate = sum(roles[role] for role in my_roles)
+    role_shares_in_store = {
+        role: round(store_income * (roles[role] / my_rate), 2)
+        for role in my_roles
+    }
+    return _shares_from_role_amounts(role_shares_in_store, roles, agent_roles)
+
+
 def calc_agent_shares(
     total_share: float,
     property_type: str,
@@ -121,73 +204,18 @@ def calc_agent_shares(
     buyer_received: float | None = None,
     total_amount: float | None = None,
 ) -> list[AgentShare]:
-    """按角色拆分各业务员应得佣金
-
-    total_share: 已扣8%德佑费的我方进店业绩（store_income）
-    property_type: 房源类型
-    my_roles: 本方持有的角色列表（成交人视角不含"客源成交人"）
-    agent_roles: 角色→业务员姓名映射。为空时生成一条总记录。
-    buyer_rate: 成交人角色占比，仅成交人视角使用
-    buyer_received: 成交人实收（未扣8%），仅成交人视角使用
-    total_amount: 业主+客户支付合计（未扣理房通费），仅成交人视角使用
-    """
-    roles = _get_roles(property_type)
-
-    if not agent_roles:
-        return [AgentShare(
-            name="",
-            roles=my_roles[:],
-            role_rate=sum(rate for role, rate in roles.items() if role in my_roles),
-            my_share=total_share,
-            beike_fee=0.0,
-            store_income=total_share,
-            commission=round(total_share * AGENT_COMMISSION_RATE, 2),
-        )]
-
-    # 构建角色→占比映射（含客源成交人）
-    role_rates: dict[str, float] = dict(roles)
-    if buyer_rate is not None:
-        role_rates["客源成交人"] = buyer_rate
-
-    # 计算各角色的实际金额（进店层面，已扣8%）
-    role_shares_in_store: dict[str, float] = {}
-    if buyer_received is not None and total_amount is not None:
-        # 成交人视角：房源方角色份额 = total_amount × 角色占比，扣8%后为进店份额
-        my_role_gross = 0.0
-        for role in my_roles:
-            gross = round(total_amount * role_rates[role], 2)
-            my_role_gross += gross
-            role_shares_in_store[role] = round(gross * (1 - BEIKE_PLATFORM_RATE), 2)
-        # 成交人角色份额 = buyer_received - 房源方角色份额合计，再扣8%
-        buyer_gross = round(buyer_received - my_role_gross, 2)
-        role_shares_in_store["客源成交人"] = round(buyer_gross * (1 - BEIKE_PLATFORM_RATE), 2)
-    else:
-        # 房源方视角：角色rate是相对总金额的占比，需要转换为相对我方份额的占比
-        my_rate = sum(roles[r] for r in my_roles)
-        for role in my_roles:
-            role_shares_in_store[role] = round(total_share * (role_rates[role] / my_rate), 2)
-
-    # 按业务员分组角色
-    agent_map: dict[str, list[str]] = {}
-    for role, name in agent_roles.items():
-        if role in role_shares_in_store:
-            agent_map.setdefault(name, []).append(role)
-
-    shares: list[AgentShare] = []
-    for name, role_list in agent_map.items():
-        rate = sum(role_rates[r] for r in role_list)
-        my_share = round(sum(role_shares_in_store[r] for r in role_list), 2)
-        commission = round(my_share * AGENT_COMMISSION_RATE, 2)
-        shares.append(AgentShare(
-            name=name,
-            roles=role_list,
-            role_rate=rate,
-            my_share=my_share,
-            beike_fee=0.0,
-            store_income=my_share,
-            commission=commission,
-        ))
-    return shares
+    """按角色拆分各业务员应得佣金"""
+    if buyer_rate is not None and buyer_received is not None and total_amount is not None:
+        return calc_buyer_agent_shares(
+            property_type,
+            my_roles,
+            agent_roles,
+            total_share,
+            buyer_rate,
+            buyer_received,
+            total_amount,
+        )
+    return calc_seller_agent_shares(property_type, my_roles, agent_roles, total_share)
 
 
 def calc_buyer_commission(

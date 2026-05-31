@@ -8,12 +8,11 @@ from unittest.mock import patch
 from commission.calculator import calc_buyer_commission, calc_seller_commission
 from commission.config import RENTAL, SALE
 from commission.feishu import (
-    CommissionRecord,
     FeishuError,
     _table_name,
-    extract_records,
     write_to_feishu,
 )
+from commission.records import CommissionRecord, extract_records
 
 
 class TestTableName:

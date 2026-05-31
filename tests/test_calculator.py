@@ -358,3 +358,40 @@ class TestPlatformViewingRole:
         assert result.my_share == 0.0
         names = [s.name for s in result.agent_shares]
         assert "张三" not in names
+
+
+class TestAgentShareConsistency:
+    """业务员拆分合计应与总账保持一致。"""
+
+    def test_buyer_split_totals_match_result_totals(self):
+        result = calc_buyer_commission(
+            property_type=RENTAL,
+            owner_amount=1000,
+            owner_payment_method="微信扫码",
+            customer_amount=1000,
+            customer_payment_method="微信扫码",
+            my_roles=["录入人", "维护人"],
+            agent_roles={"录入人": "张三", "维护人": "李四"},
+        )
+
+        assert sum(share.my_share for share in result.agent_shares) == result.store_income
+        assert sum(share.commission for share in result.agent_shares) == result.agent_commission
+        assert sum(share.beike_fee for share in result.agent_shares) == 0.0
+
+    def test_seller_split_totals_match_result_totals(self):
+        result = calc_seller_commission(
+            property_type=SALE,
+            total_amount=10000,
+            my_roles=["录入人", "维护人", "钥匙人"],
+            agent_roles={"录入人": "张三", "维护人": "李四", "钥匙人": "王五"},
+        )
+
+        assert sum(share.my_share for share in result.agent_shares) == result.store_income
+        assert sum(share.commission for share in result.agent_shares) == result.agent_commission
+        assert sum(share.beike_fee for share in result.agent_shares) == 0.0
+
+    def test_buyer_and_seller_split_helpers_are_available(self):
+        from commission import calculator
+
+        assert callable(calculator.calc_buyer_agent_shares)
+        assert callable(calculator.calc_seller_agent_shares)

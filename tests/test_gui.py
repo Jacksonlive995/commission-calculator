@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QApplication
 
 from commission.calculator import calc_buyer_commission, calc_seller_commission
 from commission.config import RENTAL, SALE
+from commission.formatter import format_buyer_result, format_seller_result
 from commission.gui.steps.step_result import StepResult
 
 
@@ -39,7 +40,7 @@ class TestAgentSplitBox:
         )
         assert len(result.agent_shares) == 3  # 张三、李四、成交人
 
-        text = StepResult()._format_buyer(result)
+        text = format_buyer_result(result)
 
         assert text.count("┌") == 1
         assert text.count("└") == 1
@@ -54,7 +55,7 @@ class TestAgentSplitBox:
         )
         assert len(result.agent_shares) == 3
 
-        text = StepResult()._format_seller(result)
+        text = format_seller_result(result)
 
         assert text.count("┌") == 1
         assert text.count("└") == 1
@@ -83,7 +84,7 @@ def test_buyer_result_marks_platform_role(qapp):
         customer_payment_method="微信扫码",
         my_roles=[],
     )
-    text = StepResult()._format_buyer(result)
+    text = format_buyer_result(result)
     assert "平台实勘 300.00（平台收取）" in text
     assert "平台实勘 300.00（它店）" not in text
 
