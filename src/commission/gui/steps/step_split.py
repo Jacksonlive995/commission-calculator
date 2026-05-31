@@ -1,11 +1,12 @@
 """Step 4: 拆分设置"""
 
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QCheckBox,
     QFormLayout,
+    QLabel,
     QLineEdit,
     QRadioButton,
-    QButtonGroup,
     QVBoxLayout,
     QWidget,
 )
@@ -21,6 +22,17 @@ class StepSplit(QWidget):
 
     def _init_ui(self) -> None:
         self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(8, 8, 8, 8)
+        self._layout.setSpacing(10)
+
+        title = QLabel("设置业务员拆分方式")
+        title.setObjectName("PageTitle")
+        self._layout.addWidget(title)
+
+        subtitle = QLabel("可不拆分，也可以按同一人或逐个角色指定业务员。")
+        subtitle.setObjectName("PageSubtitle")
+        self._layout.addWidget(subtitle)
+        self._layout.addSpacing(12)
 
         self.cb_split = QCheckBox("按业务员拆分佣金")
         self._layout.addWidget(self.cb_split)

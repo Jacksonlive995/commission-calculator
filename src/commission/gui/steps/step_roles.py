@@ -2,6 +2,7 @@
 
 from PySide6.QtWidgets import (
     QCheckBox,
+    QHBoxLayout,
     QLabel,
     QPushButton,
     QVBoxLayout,
@@ -20,6 +21,16 @@ class StepRoles(QWidget):
 
     def _init_ui(self) -> None:
         self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(8, 8, 8, 8)
+        self._layout.setSpacing(10)
+
+        title = QLabel("选择本店持有的角色")
+        title.setObjectName("PageTitle")
+        self._layout.addWidget(title)
+
+        subtitle = QLabel("平台角色不会出现在可选列表中。")
+        subtitle.setObjectName("PageSubtitle")
+        self._layout.addWidget(subtitle)
 
         self.lbl_hint = QLabel()
         self.lbl_hint.setWordWrap(True)
@@ -27,7 +38,7 @@ class StepRoles(QWidget):
 
         # 快捷按钮行
         btn_row_widget = QWidget()
-        self._btn_row = QVBoxLayout(btn_row_widget)
+        self._btn_row = QHBoxLayout(btn_row_widget)
         self._btn_row.setContentsMargins(0, 4, 0, 4)
         self.btn_all = QPushButton("全部属于本店")
         self.btn_none = QPushButton("全部不属于本店")

@@ -34,15 +34,17 @@ class CommissionWizard(QMainWindow):
         self.setCentralWidget(root)
         layout = QVBoxLayout(root)
         layout.setContentsMargins(24, 20, 24, 16)
+        layout.setSpacing(12)
 
         # 步骤指示器
         self.step_indicator = QLabel()
         self.step_indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.step_indicator.setStyleSheet("font-size:15px; font-weight:bold; color:#444;")
+        self.step_indicator.setObjectName("PageSubtitle")
         layout.addWidget(self.step_indicator)
 
         # 页面容器
         self.stack = QStackedWidget()
+        self.stack.setObjectName("Card")
         self.step_type = StepType()
         self.step_payment = StepPayment()
         self.step_roles = StepRoles()
@@ -59,6 +61,7 @@ class CommissionWizard(QMainWindow):
         btn_row = QHBoxLayout()
         self.btn_prev = QPushButton("上一步")
         self.btn_next = QPushButton("下一步")
+        self.btn_next.setObjectName("PrimaryButton")
         self.btn_prev.setFixedWidth(100)
         self.btn_next.setFixedWidth(100)
         btn_row.addStretch()

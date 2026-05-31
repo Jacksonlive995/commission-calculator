@@ -3,6 +3,7 @@
 from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
+    QLabel,
     QMessageBox,
     QPushButton,
     QTextEdit,
@@ -18,6 +19,20 @@ class StepResult(QWidget):
     def __init__(self) -> None:
         super().__init__()
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(10)
+
+        title = QLabel("查看佣金计算结果")
+        title.setObjectName("PageTitle")
+        layout.addWidget(title)
+
+        subtitle = QLabel("核对 6 步明细后，可复制结果或写入飞书。")
+        subtitle.setObjectName("PageSubtitle")
+        layout.addWidget(subtitle)
+
+        self.lbl_summary = QLabel("等待计算结果")
+        self.lbl_summary.setObjectName("ResultSummary")
+        layout.addWidget(self.lbl_summary)
 
         self.text_result = QTextEdit()
         self.text_result.setReadOnly(True)
@@ -26,6 +41,7 @@ class StepResult(QWidget):
 
         btn_row = QHBoxLayout()
         self.btn_feishu = QPushButton("写入飞书")
+        self.btn_feishu.setObjectName("PrimaryButton")
         self.btn_feishu.setFixedWidth(120)
         self.btn_feishu.clicked.connect(self._write_feishu)
         btn_row.addWidget(self.btn_feishu)
@@ -52,6 +68,11 @@ class StepResult(QWidget):
         self._view = view
         self._property_type = property_type
         self._total_amount = total_amount
+        view_label = "成交人" if view == "buyer" else "房源方"
+        self.lbl_summary.setText(
+            f"{view_label} · 总额 {total_amount:,.2f} 元 · "
+            f"进店 {result.store_income:,.2f} 元 · 应发 {result.agent_commission:,.2f} 元"
+        )
         if isinstance(result, BuyerCommissionResult):
             self.text_result.setPlainText(format_buyer_result(result))
         else:

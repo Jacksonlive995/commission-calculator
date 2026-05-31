@@ -16,6 +16,73 @@ from commission.formatter import format_buyer_result, format_seller_result
 from commission.gui.steps.step_result import StepResult
 
 
+def test_gui_stylesheet_contains_core_tokens():
+    from commission.gui.styles import build_stylesheet
+
+    css = build_stylesheet()
+    assert "QMainWindow" in css
+    assert "QPushButton" in css
+    assert "QLineEdit" in css
+    assert "QTextEdit" in css
+
+
+def test_app_icon_exists(qapp):
+    from commission.gui.resources import app_icon
+
+    icon = app_icon()
+    assert not icon.isNull()
+
+
+def test_wizard_keeps_five_steps(qapp):
+    from commission.gui.wizard import CommissionWizard
+
+    wizard = CommissionWizard()
+    assert wizard.stack.count() == 5
+    assert wizard.btn_prev.text() == "上一步"
+    assert wizard.btn_next.text() == "下一步"
+
+
+def test_step_pages_have_titles(qapp):
+    from PySide6.QtWidgets import QLabel
+
+    from commission.gui.steps.step_payment import StepPayment
+    from commission.gui.steps.step_result import StepResult
+    from commission.gui.steps.step_roles import StepRoles
+    from commission.gui.steps.step_split import StepSplit
+    from commission.gui.steps.step_type import StepType
+
+    pages = [StepType(), StepPayment(), StepRoles(), StepSplit(), StepResult()]
+    for page in pages:
+        titles = [label for label in page.findChildren(QLabel) if label.objectName() == "PageTitle"]
+        assert len(titles) == 1
+
+
+def test_result_page_keeps_action_buttons(qapp):
+    from commission.gui.steps.step_result import StepResult
+
+    step = StepResult()
+    assert step.btn_copy.text() == "复制结果"
+    assert step.btn_feishu.text() == "写入飞书"
+
+
+def test_result_page_updates_summary(qapp):
+    from commission.calculator import calc_seller_commission
+    from commission.gui.steps.step_result import StepResult
+
+    step = StepResult()
+    result = calc_seller_commission(
+        property_type=RENTAL,
+        total_amount=1000,
+        my_roles=["录入人"],
+    )
+
+    step.show_result(result, view="seller", property_type=RENTAL, total_amount=1000)
+
+    assert "房源方" in step.lbl_summary.text()
+    assert "进店 92.00" in step.lbl_summary.text()
+    assert "应发 46.00" in step.lbl_summary.text()
+
+
 @pytest.fixture(scope="module")
 def qapp():
     app = QApplication.instance() or QApplication([])

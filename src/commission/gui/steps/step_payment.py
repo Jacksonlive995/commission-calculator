@@ -1,5 +1,6 @@
 """Step 2: 支付信息"""
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
@@ -20,10 +21,23 @@ class StepPayment(QWidget):
 
     def _init_ui(self) -> None:
         self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(8, 8, 8, 8)
+        self._layout.setSpacing(10)
+
+        title = QLabel("输入支付金额和平台费")
+        title.setObjectName("PageTitle")
+        self._layout.addWidget(title)
+
+        subtitle = QLabel("根据成交人或房源方视角录入支付信息。")
+        subtitle.setObjectName("PageSubtitle")
+        self._layout.addWidget(subtitle)
+        self._layout.addSpacing(12)
 
         # 成交人视角：业主 + 客户
         self.buyer_widget = QWidget()
         bl = QFormLayout(self.buyer_widget)
+        bl.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        bl.setFormAlignment(Qt.AlignmentFlag.AlignTop)
         self.sp_owner = QDoubleSpinBox()
         self.sp_owner.setRange(0.01, 9999999)
         self.sp_owner.setDecimals(2)
@@ -55,6 +69,7 @@ class StepPayment(QWidget):
         # 房源方视角：总额
         self.seller_widget = QWidget()
         sl = QFormLayout(self.seller_widget)
+        sl.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         self.sp_total = QDoubleSpinBox()
         self.sp_total.setRange(0.01, 9999999)
         self.sp_total.setDecimals(2)

@@ -15,9 +15,22 @@ class StepType(QWidget):
     def __init__(self) -> None:
         super().__init__()
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(10)
+
+        title = QLabel("选择房源类型和计算视角")
+        title.setObjectName("PageTitle")
+        layout.addWidget(title)
+
+        subtitle = QLabel("先确认业务场景，再进入金额和角色配置。")
+        subtitle.setObjectName("PageSubtitle")
+        layout.addWidget(subtitle)
+        layout.addSpacing(12)
 
         # 房源类型
-        layout.addWidget(QLabel("房源类型"))
+        label_type = QLabel("房源类型")
+        label_type.setObjectName("SectionTitle")
+        layout.addWidget(label_type)
         self.bg_type = QButtonGroup(self)
         self.rb_rental = QRadioButton("租赁")
         self.rb_sale = QRadioButton("买卖")
@@ -30,7 +43,9 @@ class StepType(QWidget):
         layout.addSpacing(16)
 
         # 计算视角
-        layout.addWidget(QLabel("计算视角"))
+        label_view = QLabel("计算视角")
+        label_view.setObjectName("SectionTitle")
+        layout.addWidget(label_view)
         self.bg_view = QButtonGroup(self)
         self.rb_buyer = QRadioButton("成交人（我店成交它店房源）")
         self.rb_seller = QRadioButton("房源方（它店成交我店房源）")
