@@ -143,6 +143,12 @@ class CommissionWizard(QMainWindow):
                 my_roles=rs["my_roles"],
                 agent_roles=ss.get("agent_roles"),
             )
+            self.step_result.show_result(
+                result,
+                view="buyer",
+                property_type=ts["property_type"],
+                total_amount=ps["owner_amount"] + ps["customer_amount"],
+            )
         else:
             result = calc_seller_commission(
                 property_type=ts["property_type"],
@@ -150,4 +156,9 @@ class CommissionWizard(QMainWindow):
                 my_roles=rs["my_roles"],
                 agent_roles=ss.get("agent_roles"),
             )
-        self.step_result.show_result(result)
+            self.step_result.show_result(
+                result,
+                view="seller",
+                property_type=ts["property_type"],
+                total_amount=ps["total_amount"],
+            )

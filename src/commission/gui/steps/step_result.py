@@ -3,6 +3,8 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
+    QHBoxLayout,
+    QMessageBox,
     QPushButton,
     QTextEdit,
     QVBoxLayout,
@@ -23,15 +25,34 @@ class StepResult(QWidget):
         self.text_result.setStyleSheet("font-family: 'Consolas', 'Microsoft YaHei', monospace; font-size: 13px;")
         layout.addWidget(self.text_result, 1)
 
+        btn_row = QHBoxLayout()
+        self.btn_feishu = QPushButton("写入飞书")
+        self.btn_feishu.setFixedWidth(120)
+        self.btn_feishu.clicked.connect(self._write_feishu)
+        btn_row.addWidget(self.btn_feishu)
+
         self.btn_copy = QPushButton("复制结果")
         self.btn_copy.setFixedWidth(120)
-        layout.addWidget(self.btn_copy, 0, Qt.AlignmentFlag.AlignRight)
         self.btn_copy.clicked.connect(self._copy)
+        btn_row.addWidget(self.btn_copy)
+
+        btn_row.addStretch()
+        layout.addLayout(btn_row, 0)
+
+        self._result = None
+        self._view = ""
+        self._property_type = ""
+        self._total_amount = 0.0
 
     def validate(self) -> bool:
         return True
 
-    def show_result(self, result: BuyerCommissionResult | SellerCommissionResult) -> None:
+    def show_result(self, result: BuyerCommissionResult | SellerCommissionResult,
+                     view: str = "", property_type: str = "", total_amount: float = 0.0) -> None:
+        self._result = result
+        self._view = view
+        self._property_type = property_type
+        self._total_amount = total_amount
         if isinstance(result, BuyerCommissionResult):
             self.text_result.setPlainText(self._format_buyer(result))
         else:
@@ -40,6 +61,20 @@ class StepResult(QWidget):
     def _copy(self) -> None:
         clipboard = QApplication.clipboard()
         clipboard.setText(self.text_result.toPlainText())
+
+    def _write_feishu(self) -> None:
+        if not self._result:
+            return
+        try:
+            from commission.feishu import extract_records, write_to_feishu
+            records = extract_records(self._result, self._view, self._property_type, self._total_amount)
+            if not records:
+                QMessageBox.warning(self, "提示", "没有可写入的记录")
+                return
+            url = write_to_feishu(records)
+            QMessageBox.information(self, "写入成功", f"已写入飞书多维表格：\n{url}")
+        except Exception as e:
+            QMessageBox.critical(self, "写入失败", f"写入飞书多维表格失败：\n{e}")
 
     # ── 格式化 ───────────────────────────────────────────
 

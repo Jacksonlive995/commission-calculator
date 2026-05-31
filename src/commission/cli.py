@@ -25,12 +25,12 @@ BORDER = "─" * 48
 def _choose(prompt: str, options: list[str]) -> int:
     """数字快捷选择，返回索引"""
     for i, opt in enumerate(options, 1):
-        print(f"  {i}. {opt}")
+        print(f" {i}. {opt}")
     while True:
         raw = input(f"{prompt}（1-{len(options)}）: ").strip()
         if raw.isdigit() and 1 <= int(raw) <= len(options):
             return int(raw) - 1
-        print(f"  ⚠ 请输入 1-{len(options)} 之间的数字")
+        print(f" ⚠ 请输入 1-{len(options)} 之间的数字")
 
 
 def _choose_yes_no(prompt: str) -> bool:
@@ -39,7 +39,25 @@ def _choose_yes_no(prompt: str) -> bool:
         raw = input(f"{prompt}（y/n）: ").strip().lower()
         if raw in ("y", "n"):
             return raw == "y"
-        print("  ⚠ 请输入 y 或 n")
+        print(" ⚠ 请输入 y 或 n")
+
+
+def _ask_write_feishu(result, view: str, property_type: str, total_amount: float = 0.0) -> None:
+    """询问是否写入飞书多维表格"""
+    print()
+    print("是否将结果写入飞书多维表格？")
+    if not _choose_yes_no(" 写入飞书"):
+        return
+    try:
+        from commission.feishu import extract_records, write_to_feishu
+        records = extract_records(result, view, property_type, total_amount)
+        if not records:
+            print(" ⚠ 没有可写入的记录")
+            return
+        url = write_to_feishu(records)
+        print(f" ✓ 已写入飞书多维表格: {url}")
+    except Exception as e:
+        print(f" ✗ 写入飞书失败: {e}")
 
 
 def _input_amount(label: str) -> float:
@@ -50,9 +68,9 @@ def _input_amount(label: str) -> float:
             val = float(raw)
             if val > 0:
                 return val
-            print("  ⚠ 金额必须大于0")
+            print(" ⚠ 金额必须大于0")
         except ValueError:
-            print("  ⚠ 请输入有效数字")
+            print(" ⚠ 请输入有效数字")
 
 
 def _input_name(label: str) -> str:
@@ -67,7 +85,7 @@ def _pick_payment(label: str) -> str:
     idx = _choose("请选择", PAYMENT_OPTIONS)
     name = PAYMENT_OPTIONS[idx]
     rate = PAYMENT_RATES[name]
-    print(f"  → {name}（费率 {rate * 100:.2f}%）")
+    print(f" → {name}（费率 {rate * 100:.2f}%）")
     return name
 
 
@@ -76,7 +94,7 @@ def _pick_my_roles(role_names: list[str]) -> list[str]:
     print(f"\n哪些角色属于本店业务员？（逐个确认）")
     my_roles: list[str] = []
     for role in role_names:
-        if _choose_yes_no(f"  {role} 是否属于本店？"):
+        if _choose_yes_no(f" {role} 是否属于本店？"):
             my_roles.append(role)
     return my_roles
 
@@ -87,24 +105,24 @@ def _pick_agent_roles(my_roles: list[str], buyer_role: bool = False) -> dict[str
         return None
 
     print("\n是否需要按业务员拆分佣金？")
-    if not _choose_yes_no("  拆分"):
+    if not _choose_yes_no(" 拆分"):
         return None
 
     agent_roles: dict[str, str] = {}
-    all_same = _choose_yes_no("  所有角色属于同一业务员？")
+    all_same = _choose_yes_no(" 所有角色属于同一业务员？")
 
     if all_same:
-        name = _input_name("  业务员姓名")
+        name = _input_name(" 业务员姓名")
         for role in my_roles:
             agent_roles[role] = name
         if buyer_role:
             agent_roles["客源成交人"] = name
     else:
         for role in my_roles:
-            name = _input_name(f"  {role} 的业务员姓名")
+            name = _input_name(f" {role} 的业务员姓名")
             agent_roles[role] = name
         if buyer_role:
-            buyer_name = _input_name("  客源成交人的业务员姓名")
+            buyer_name = _input_name(" 客源成交人的业务员姓名")
             agent_roles["客源成交人"] = buyer_name
 
     return agent_roles
@@ -119,16 +137,16 @@ def _show_agent_shares(shares: list[AgentShare]) -> None:
     """展示各业务员拆分明细"""
     if not shares or (len(shares) == 1 and shares[0].name == ""):
         return
-    print(f"\n  ┌─ 业务员佣金拆分 ─────────────────────────")
+    print(f"\n ┌─ 业务员佣金拆分 ─────────────────────────")
     for s in shares:
         role_str = " + ".join(s.roles)
         pct = s.role_rate * 100
         if pct == int(pct):
             pct = int(pct)
-        print(f"  │ {s.name}（{role_str} = {pct}%）")
-        print(f"  │   份额 {_fmt_money(s.my_share)} - 德佑 {_fmt_money(s.beike_fee)} = 进店 {_fmt_money(s.store_income)}")
-        print(f"  │   应发佣金: {_fmt_money(s.commission)} 元")
-    print(f"  └──────────────────────────────────────────")
+        print(f" │ {s.name}（{role_str} = {pct}%）")
+        print(f" │ 份额 {_fmt_money(s.my_share)} - 德佑 {_fmt_money(s.beike_fee)} = 进店 {_fmt_money(s.store_income)}")
+        print(f" │ 应发佣金: {_fmt_money(s.commission)} 元")
+        print(f" └──────────────────────────────────────────")
 
 
 # ── 展示结果 ──────────────────────────────────────────────
@@ -136,19 +154,19 @@ def _show_agent_shares(shares: list[AgentShare]) -> None:
 def _show_buyer_result(r: BuyerCommissionResult) -> None:
     type_label = "租赁" if r.property_type == RENTAL else "买卖"
     print(f"\n{BORDER}")
-    print(f"  【{type_label}·成交人视角】佣金计算明细")
+    print(f" 【{type_label}·成交人视角】佣金计算明细")
     print(BORDER)
 
     # Step 1
-    print(f"\n  Step 1  理房通平台费")
-    print(f"    业主  {_fmt_money(r.owner_amount)} × {PAYMENT_RATES[r.owner_payment_method] * 100:.2f}% = {_fmt_money(r.owner_payment_fee)}")
-    print(f"    客户  {_fmt_money(r.customer_amount)} × {PAYMENT_RATES[r.customer_payment_method] * 100:.2f}% = {_fmt_money(r.customer_payment_fee)}")
-    print(f"    合计  {_fmt_money(r.total_payment_fee)}")
+    print(f"\n Step 1 理房通平台费")
+    print(f" 业主 {_fmt_money(r.owner_amount)} × {PAYMENT_RATES[r.owner_payment_method] * 100:.2f}% = {_fmt_money(r.owner_payment_fee)}")
+    print(f" 客户 {_fmt_money(r.customer_amount)} × {PAYMENT_RATES[r.customer_payment_method] * 100:.2f}% = {_fmt_money(r.customer_payment_fee)}")
+    print(f" 合计 {_fmt_money(r.total_payment_fee)}")
 
     # Step 2
-    print(f"\n  Step 2  角色业绩拆分")
+    print(f"\n Step 2 角色业绩拆分")
     for side, detail in [("业主", r.owner_detail), ("客户", r.customer_detail)]:
-        print(f"    {side}方：")
+        print(f" {side}方：")
         for role, share in detail.role_shares.items():
             if role in PLATFORM_ROLES:
                 owner_mark = "（平台收取）"
@@ -156,65 +174,65 @@ def _show_buyer_result(r: BuyerCommissionResult) -> None:
                 owner_mark = "（本店）"
             else:
                 owner_mark = "（它店）"
-            print(f"      {role}  {_fmt_money(share)}{owner_mark}")
+            print(f" {role} {_fmt_money(share)}{owner_mark}")
 
     # Step 3
-    print(f"\n  Step 3  成交人实收佣金")
+    print(f"\n Step 3 成交人实收佣金")
     for side, detail, received in [
         ("业主", r.owner_detail, r.owner_received),
         ("客户", r.customer_detail, r.customer_received),
     ]:
         other = sum(v for k, v in detail.role_shares.items() if k not in r.my_roles)
-        print(f"    {side}方: {_fmt_money(detail.amount)} - {_fmt_money(detail.payment_fee)} - {_fmt_money(other)} = {_fmt_money(received)}")
-    print(f"    合计  {_fmt_money(r.total_received)}")
+        print(f" {side}方: {_fmt_money(detail.amount)} - {_fmt_money(detail.payment_fee)} - {_fmt_money(other)} = {_fmt_money(received)}")
+    print(f" 合计 {_fmt_money(r.total_received)}")
 
     # Step 4
-    print(f"\n  Step 4  德佑平台服务费")
-    print(f"    {_fmt_money(r.total_received)} × 8% = {_fmt_money(r.beike_fee)}")
+    print(f"\n Step 4 德佑平台服务费")
+    print(f" {_fmt_money(r.total_received)} × 8% = {_fmt_money(r.beike_fee)}")
 
     # Step 5
-    print(f"\n  Step 5  进店实收业绩")
-    print(f"    {_fmt_money(r.total_received)} - {_fmt_money(r.beike_fee)} = {_fmt_money(r.store_income)}")
+    print(f"\n Step 5 进店实收业绩")
+    print(f" {_fmt_money(r.total_received)} - {_fmt_money(r.beike_fee)} = {_fmt_money(r.store_income)}")
 
     # Step 6
-    print(f"\n  Step 6  业务员应发佣金")
-    print(f"    {_fmt_money(r.store_income)} × 50% = {_fmt_money(r.agent_commission)}")
+    print(f"\n Step 6 业务员应发佣金")
+    print(f" {_fmt_money(r.store_income)} × 50% = {_fmt_money(r.agent_commission)}")
 
     # 多业务员拆分
     _show_agent_shares(r.agent_shares)
 
     print(f"\n{BORDER}")
     if r.agent_shares and r.agent_shares[0].name != "":
-        print(f"  ★ 各业务员到手见上方拆分明细")
+        print(f" ★ 各业务员到手见上方拆分明细")
     else:
-        print(f"  ★ 业务员到手: {_fmt_money(r.agent_commission)} 元")
+        print(f" ★ 业务员到手: {_fmt_money(r.agent_commission)} 元")
     print(BORDER)
 
 
 def _show_seller_result(r: SellerCommissionResult) -> None:
     type_label = "租赁" if r.property_type == RENTAL else "买卖"
     print(f"\n{BORDER}")
-    print(f"  【{type_label}·房源方视角】佣金计算明细")
+    print(f" 【{type_label}·房源方视角】佣金计算明细")
     print(BORDER)
 
     roles = RENTAL_ROLES if r.property_type == RENTAL else SALE_ROLES
     my_rate = sum(rate for role, rate in roles.items() if role in r.my_roles)
 
-    print(f"\n  我方角色: {' + '.join(r.my_roles)} = {my_rate * 100:.0f}%")
-    print(f"  我方份额: {_fmt_money(r.total_amount)} × {my_rate * 100:.0f}% = {_fmt_money(r.my_share)}")
+    print(f"\n 我方角色: {' + '.join(r.my_roles)} = {my_rate * 100:.0f}%")
+    print(f" 我方份额: {_fmt_money(r.total_amount)} × {my_rate * 100:.0f}% = {_fmt_money(r.my_share)}")
 
-    print(f"\n  德佑平台服务费: {_fmt_money(r.my_share)} × 8% = {_fmt_money(r.beike_fee)}")
-    print(f"  进店实收业绩: {_fmt_money(r.my_share)} - {_fmt_money(r.beike_fee)} = {_fmt_money(r.store_income)}")
-    print(f"  业务员应发佣金: {_fmt_money(r.store_income)} × 50% = {_fmt_money(r.agent_commission)}")
+    print(f"\n 德佑平台服务费: {_fmt_money(r.my_share)} × 8% = {_fmt_money(r.beike_fee)}")
+    print(f" 进店实收业绩: {_fmt_money(r.my_share)} - {_fmt_money(r.beike_fee)} = {_fmt_money(r.store_income)}")
+    print(f" 业务员应发佣金: {_fmt_money(r.store_income)} × 50% = {_fmt_money(r.agent_commission)}")
 
     # 多业务员拆分
     _show_agent_shares(r.agent_shares)
 
     print(f"\n{BORDER}")
     if r.agent_shares and r.agent_shares[0].name != "":
-        print(f"  ★ 各业务员到手见上方拆分明细")
+        print(f" ★ 各业务员到手见上方拆分明细")
     else:
-        print(f"  ★ 业务员到手: {_fmt_money(r.agent_commission)} 元")
+        print(f" ★ 业务员到手: {_fmt_money(r.agent_commission)} 元")
     print(BORDER)
 
 
@@ -242,7 +260,7 @@ def main() -> None:
         customer_method = _pick_payment("客户")
 
         print("\n本店业务员兼任哪些房源方角色？")
-        print("  快捷选择：")
+        print(" 快捷选择：")
         quick_idx = _choose("请选择", ["逐个选择", "全部属于本店", "全部不属于本店"])
 
         if quick_idx == 0:
@@ -266,13 +284,14 @@ def main() -> None:
             agent_roles=agent_roles,
         )
         _show_buyer_result(result)
+        _ask_write_feishu(result, "buyer", property_type, owner_amount + customer_amount)
 
     else:
         # 房源方视角
         total_amount = _input_amount("\n对方收佣金合计")
 
         print("\n本店业务员拥有哪些房源方角色？")
-        print("  快捷选择：")
+        print(" 快捷选择：")
         quick_idx = _choose("请选择", ["逐个选择", "全部属于本店", "全部不属于本店"])
 
         if quick_idx == 0:
@@ -292,6 +311,7 @@ def main() -> None:
             agent_roles=agent_roles,
         )
         _show_seller_result(result)
+        _ask_write_feishu(result, "seller", property_type, total_amount)
 
     print()
 

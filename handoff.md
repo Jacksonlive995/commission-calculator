@@ -1,10 +1,10 @@
-# Handoff 文档 — 佣金计算器 v0.2.0
+# Handoff 文档 — 佣金计算器 v0.3.0
 
 > 最后更新：2026-05-31
 
 ## 项目概述
 
-房产中介佣金计算工具（CLI + GUI）。业务场景：成交一套房源后，需要计算平台分账和业务员应发佣金。计算涉及6步流程，且角色组合多变，手动计算易出错。
+房产中介佣金计算工具（CLI + GUI + 飞书多维表格）。业务场景：成交一套房源后，需要计算平台分账和业务员应发佣金。计算涉及6步流程，且角色组合多变，手动计算易出错。
 
 ## 已完成功能
 
@@ -46,11 +46,24 @@ PySide6 实现的向导式桌面应用，5步导航：① 房源类型 → ② �
 - `gui/steps/step_payment.py` — 支付金额输入 + 支付方式下拉 + 实时费率预览；房源方视角只显示一个总额输入
 - `gui/steps/step_roles.py` — 角色复选框列表 + 全部本店/全部它店快捷按钮
 - `gui/steps/step_split.py` — 拆分开关 + 同一人/逐个指定 + 姓名输入
-- `gui/steps/step_result.py` — 格式化结果展示（与CLI输出一致）+ 复制按钮
+- `gui/steps/step_result.py` — 格式化结果展示（与CLI输出一致）+ 复制按钮 + 写入飞书按钮
+
+### 飞书多维表格集成（feishu.py）
+
+计算完成后可将结果逐笔写入飞书多维表格，按业务员分表统计。
+
+- **首次使用自动创建**：调用飞书 API 创建多维表格应用及数据表，`app_token` 保存到 `~/.commission/feishu_config.json`，后续复用
+- **按业务员+视角分表**：每个业务员两个数据表（如 `张三_成交方`、`张三_客源方`），新业务员自动建表
+- **数据表字段**：日期、房源类型（单选）、角色（文本）、角色占比（数字0.10=10%）、佣金总额、我方份额、德佑费、进店业绩、应发佣金
+- **CLI**：计算完成后询问是否写入飞书
+- **GUI**：结果页「写入飞书」按钮，点击后弹窗显示成功/失败
+- **凭证配置**：从 `.env` 文件读取 `FEISHU_APP_ID` 和 `FEISHU_APP_SECRET`，查找顺序：项目根目录 → exe同级目录 → 当前工作目录
+- **认证**：tenant_access_token 带缓存（2小时有效期），注意认证接口的 token 在 JSON 顶层而非 `data` 字段
+- **飞书应用权限**：需在飞书开放平台开通 `bitable:app` 和 `base:app:create` 权限，否则报 Access denied
 
 ### 配置常量（config.py）
 
-租赁4角色、买卖6角色（含平台实勘3%，由 PLATFORM_ROLES 标记为平台角色）、8种支付费率、8%德佑费、50%提成。
+租赁4角色、买卖6角色（含平台实勘3%，由 PLATFORM_ROLES 标记为平台角色）、8种支付费率、8%德佑费、50%提成、飞书API凭证（从 .env 读取）。
 
 ## 关键设计决策
 
@@ -59,10 +72,12 @@ PySide6 实现的向导式桌面应用，5步导航：① 房源类型 → ② �
 3. **租赁维护人10%**：用户确认租赁维护人业绩占比为10%（非文档中写的5%），成交人占60%。
 4. **8%德佑费只扣一次**（2026-05-31 修正了双重扣除bug）：此前拆分到具体业务员时，每人各自又扣了一次8%，导致总扣除额远超8%。修正后：总账层面扣一次8%得到 store_income，拆分时各人按实际份额直接 ×50%，不再扣8%。
 5. **拆分按我方内部比例分配**（2026-05-31 修正）：房源方视角中，角色rate是相对总金额的占比（如录入人10%），拆分时需转换为相对我方份额的占比（10%/20%=50%），否则同一业务员持有全部角色时只分到角色rate之和比例而非100%。成交人视角中，用各角色在 total_received 中的实际金额分配，避免角色占比之和超过100%导致分配总额超过 store_income。
+6. **飞书多维表格按业务员分表**（2026-05-31）：不按房源类型分表，而按业务员+视角分表（如`张三_成交方`、`张三_客源方`），便于个人业绩统计。首次使用自动创建整个表格结构，后续只创建新业务员的数据表。
+7. **飞书API踩坑记录**（2026-05-31）：(a) 认证接口 `tenant_access_token` 在 JSON 顶层而非 `data` 里；(b) 创建数据表时不支持 `type=14`（percent），用 `type=2`（number）代替，写入时传 0.10 表示 10%；(c) date 字段不能带 property 参数；(d) 分页判断需用 `has_more` 而非 `page_token` 是否为空（最后一页 page_token 仍非空但 has_more=false）。
 
 ## 测试覆盖
 
-34个测试用例，全部通过：
+42个测试用例，全部通过：
 
 | 测试类/文件 | 用例数 | 覆盖场景 |
 |--------|--------|----------|
@@ -76,6 +91,20 @@ PySide6 实现的向导式桌面应用，5步导航：① 房源类型 → ② �
 | TestBuyerAgentShares | 2 | 成交人角色拆分 + 向后兼容 |
 | TestPlatformViewingRole | 3 | 平台角色边界：误传my_roles/不分配业务员/房源方 |
 | test_gui.py | 5 | GUI边框闭合、平台角色勾选排除、展示标注「平台收取」、setup前get_state |
+| TestTableName | 2 | 飞书数据表命名规则 |
+| TestExtractRecords | 3 | 从计算结果提取佣金记录（成交人/房源方/无拆分） |
+| TestWriteToFeishu | 3 | 首次写入创建表格/复用已有表格/API错误处理 |
+
+## 打包
+
+```bash
+uv run pyinstaller --onefile --windowed --name "佣金计算器" --noconfirm   --hidden-import commission --hidden-import commission.config   --hidden-import commission.calculator --hidden-import commission.feishu   --hidden-import commission.gui --hidden-import commission.gui.app   --hidden-import commission.gui.wizard   --hidden-import commission.gui.steps.step_type   --hidden-import commission.gui.steps.step_payment   --hidden-import commission.gui.steps.step_roles   --hidden-import commission.gui.steps.step_split   --hidden-import commission.gui.steps.step_result   src/commission/gui/launch.py
+```
+
+生成 `dist/佣金计算器.exe`（约46MB，含PySide6运行时），Windows 10 可直接双击运行。
+- `.env` 文件需与 `.exe` 放在同一目录
+- `launch.py` 是 PyInstaller 入口（带错误捕获弹窗），不是正常的 `app.py`
+- `--hidden-import` 必须显式列出所有子模块，否则 PyInstaller 不会打包
 
 ## 已知限制 / 未来可做
 
@@ -83,6 +112,7 @@ PySide6 实现的向导式桌面应用，5步导航：① 房源类型 → ② �
 - 没有持久化/历史记录功能
 - 角色和费率硬编码在 config.py 中，修改需改代码
 - GUI 界面缺少输入验证的视觉反馈（如红框提示）
+- .exe 双击没反应时需排查（可能缺少 .env 或 PyInstaller 打包遗漏模块）
 
 ## 运行命令
 

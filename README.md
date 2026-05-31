@@ -1,6 +1,6 @@
 # 佣金计算器
 
-房产中介佣金计算工具（CLI + 图形界面）。输入房源信息、支付金额和角色归属，自动完成6步分账计算并输出每笔明细。
+房产中介佣金计算工具（CLI + 图形界面）。输入房源信息、支付金额和角色归属，自动完成6步分账计算并输出每笔明细，支持一键写入飞书多维表格。
 
 ## 功能
 
@@ -12,6 +12,7 @@
 - 成交人兼任房源方角色时自动调整占比
 - 8种支付方式的快捷选择
 - PySide6 图形界面（向导式5步导航，实时费率预览，一键复制结果）
+- 飞书多维表格集成：计算结果按业务员分表写入，每人成交方/客源方各一页
 
 ## 业务规则
 
@@ -74,11 +75,37 @@ uv run commission-gui
 4. 选择角色归属（全部属于本店 / 逐个选择 / 全部不属于本店）
 5. 选择是否按业务员拆分佣金，为每个角色指定业务员姓名
 6. 输出完整6步计算明细 + 各业务员拆分明细
+7. 选择是否写入飞书多维表格（CLI 询问 / GUI 按钮）
+
+### 飞书多维表格
+
+1. 复制 `.env.example` 为 `.env`，填入飞书开放平台的 App ID 和 App Secret
+2. 首次写入时自动创建多维表格和数据表，后续写入复用
+3. 每个业务员两个数据表：`姓名_成交方` 和 `姓名_客源方`
+4. 每笔佣金写入一条记录，字段包含：日期、房源类型、角色、角色占比、佣金总额、我方份额、德佑费、进店业绩、应发佣金
+
+### 打包为 Windows 可执行文件
+
+```bash
+uv run pyinstaller --onefile --windowed --name "佣金计算器" --noconfirm \
+  --hidden-import commission --hidden-import commission.config \
+  --hidden-import commission.calculator --hidden-import commission.feishu \
+  --hidden-import commission.gui --hidden-import commission.gui.app \
+  --hidden-import commission.gui.wizard \
+  --hidden-import commission.gui.steps.step_type \
+  --hidden-import commission.gui.steps.step_payment \
+  --hidden-import commission.gui.steps.step_roles \
+  --hidden-import commission.gui.steps.step_split \
+  --hidden-import commission.gui.steps.step_result \
+  src/commission/gui/launch.py
+```
+
+生成的 `dist/佣金计算器.exe` 可直接双击运行，无需安装 Python。`.env` 文件需与 exe 放在同一目录。
 
 ## 开发
 
 ```bash
-uv run pytest # 运行测试（34个用例）
+uv run pytest # 运行测试（42个用例）
 uv run pytest -v # 详细输出
 uv run python -m commission # CLI入口
 uv run commission-gui # GUI入口
@@ -94,6 +121,7 @@ cw-project/
 │   ├── __init__.py
 │   ├── config.py # 费率、角色比例等常量
 │   ├── calculator.py # 纯计算逻辑（无IO）
+│   ├── feishu.py # 飞书多维表格 API 封装
 │   ├── cli.py # 交互式命令行入口
 │   └── gui/ # PySide6 图形界面
 │       ├── app.py # GUI入口
@@ -107,5 +135,6 @@ cw-project/
 └── tests/
     ├── __init__.py
     ├── test_calculator.py # 计算逻辑单元测试
+├── test_feishu.py # 飞书模块单元测试
     └── test_gui.py # GUI 展示/交互单元测试
 ```

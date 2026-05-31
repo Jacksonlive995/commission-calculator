@@ -7,10 +7,16 @@ authors = [
     { name = "chavez-2023", email = "apchat2023@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = ["pyside6>=6.6"]
+dependencies = [
+    "pyside6>=6.6",
+    "python-dotenv>=1.2.2",
+]
 
 [dependency-groups]
-dev = ["pytest>=8.0"]
+dev = [
+    "pyinstaller>=6.20.0",
+    "pytest>=8.0",
+]
 
 [project.scripts]
 commission = "commission.cli:main"

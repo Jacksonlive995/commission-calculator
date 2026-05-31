@@ -45,3 +45,39 @@ BEIKE_PLATFORM_RATE: float = 0.08
 
 # 业务员提成比例
 AGENT_COMMISSION_RATE: float = 0.50
+
+# ── 飞书多维表格 ────────────────────────────────────────────
+import os
+import sys
+from pathlib import Path
+
+
+def _find_dotenv() -> Path | None:
+    """查找 .env 文件：项目根目录 > exe同级目录 > 当前工作目录"""
+    candidates: list[Path] = []
+    # 开发模式：项目根目录（src/commission/config.py → 上3级）
+    candidates.append(Path(__file__).resolve().parent.parent.parent / ".env")
+    # PyInstaller 打包模式：exe 同级目录
+    if getattr(sys, "frozen", False):
+        candidates.append(Path(sys.executable).parent / ".env")
+    # 当前工作目录
+    candidates.append(Path.cwd() / ".env")
+    for p in candidates:
+        if p.exists():
+            return p
+    return None
+
+
+_dotenv = _find_dotenv()
+if _dotenv:
+    for _line in _dotenv.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _, _v = _line.partition("=")
+            _k, _v = _k.strip(), _v.strip()
+            if _k and _k not in os.environ:
+                os.environ[_k] = _v
+
+FEISHU_APP_ID: str = os.environ.get("FEISHU_APP_ID", "")
+FEISHU_APP_SECRET: str = os.environ.get("FEISHU_APP_SECRET", "")
+FEISHU_API_BASE: str = "https://open.feishu.cn/open-apis"
