@@ -72,9 +72,20 @@ uv run commission
 uv run commission-gui
 ```
 
-交互流程（CLI / GUI 通用）：
-1. 选择房源类型（租赁/买卖）
-2. 选择计算视角（成交人/房源方）
+### 首次使用快速上手
+
+1. 安装依赖：`uv sync`
+2. 配置飞书：复制 `.env.example` 为 `.env`，填写 `FEISHU_APP_ID` 和 `FEISHU_APP_SECRET`
+3. 启动程序：`uv run commission` 或 `uv run commission-gui`
+4. 按流程录入房源类型、视角、支付金额、角色归属和业务员姓名
+5. 查看 6 步结果；需要时选择写入飞书
+
+### 交互流程
+
+CLI / GUI 通用流程：
+
+1. 选择房源类型（租赁 / 买卖）
+2. 选择计算视角（成交人 / 房源方）
 3. 输入支付金额和方式（数字快捷选择）
 4. 选择角色归属（全部属于本店 / 逐个选择 / 全部不属于本店）
 5. 选择是否按业务员拆分佣金，为每个角色指定业务员姓名
@@ -106,6 +117,22 @@ uv run pyinstaller --onefile --windowed --name "佣金计算器" --noconfirm \
 
 生成的 `dist/佣金计算器.exe` 可直接双击运行，无需安装 Python。`.env` 文件需与 exe 放在同一目录。
 
+## 最终使用说明
+
+如果你只想“先跑起来”，按下面做就够了：
+
+- **本地运行**：先执行 `uv sync`
+- **命令行**：执行 `uv run commission`
+- **图形界面**：执行 `uv run commission-gui`
+- **飞书写入**：先准备 `.env`，再在结果页点击写入
+- **打包后运行**：把 `.env` 放到 exe 同目录，再双击 exe
+
+常见问题：
+
+- **飞书写入失败**：先检查 `.env` 里是否配置了 `FEISHU_APP_ID` 和 `FEISHU_APP_SECRET`
+- **打包后打不开**：先确认 exe 同目录是否有 `.env`
+- **结果和文档不一致**：以 `docs/business-rules.md` 为准，`cw-project.md` 只保留原始记录
+
 ## 开发
 
 ```bash
@@ -127,11 +154,15 @@ cw-project/
 │   └── refactor-plan.md # 后续结构化整理计划
 ├── src/commission/
 │   ├── __init__.py
-│   ├── config.py # 费率、角色比例等常量
+│   ├── config.py # 费率、角色比例等业务常量
+│   ├── settings.py # .env 与飞书运行配置
 │   ├── calculator.py # 纯计算逻辑（无 IO）
+│   ├── formatter.py # CLI/GUI 共用结果格式化
+│   ├── records.py # 计算结果转外部记录
 │   ├── feishu.py # 飞书多维表格 API 封装
 │   ├── cli.py # 交互式命令行入口
 │   └── gui/ # PySide6 图形界面
+│       ├── launch.py # PyInstaller 打包入口
 │       ├── app.py # GUI 入口
 │       ├── wizard.py # 向导主窗口
 │       └── steps/ # 各步骤页面
