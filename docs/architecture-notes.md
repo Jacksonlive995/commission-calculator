@@ -57,10 +57,10 @@
 
 ## 当前已知耦合点
 
-1. CLI 和 GUI 各有一套结果格式化逻辑，后续要合并到统一 formatter。
-2. `feishu.py` 当前同时承担记录抽取和 API 写入，后续要拆成 `records.py + feishu.py`。
+1. CLI 和 GUI 的结果格式化已经合并到统一 formatter。
+2. `feishu.py` 只负责 API 写入和远端表格管理，记录抽取已经移到 `records.py`。
 3. `config.py` 当前同时包含业务常量和 `.env` 加载，后续要把运行配置移出。
-4. `calc_agent_shares()` 同时兼容成交人/房源方拆分，后续可以考虑拆成两个入口，但这不是第一优先级。
+4. `calc_agent_shares()` 已拆出成交人/房源方两个辅助入口；旧入口保留作兼容封装。
 
 ## 重构顺序约定
 

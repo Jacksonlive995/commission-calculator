@@ -109,7 +109,7 @@ uv run pyinstaller --onefile --windowed --name "佣金计算器" --noconfirm \
 ## 开发
 
 ```bash
-uv run pytest # 运行测试（42 个用例）
+uv run pytest # 运行测试（45 个用例）
 uv run pytest -v # 详细输出
 uv run python -m commission # CLI 入口
 uv run commission-gui # GUI 入口
