@@ -200,13 +200,15 @@ class TestSellerCommission:
 class TestSellerAgentShares:
     """房源方视角：多业务员拆分
 
-    calc_agent_shares 接收 my_share（未扣8%德佑费），
-    每人按角色比例从 my_share 中算份额，再各自扣8%和50%。
+    calc_agent_shares 接收 store_income（已扣8%德佑费），
+    每人按角色占我方份额的比例分配进店业绩，再直接×50%。
+    8%德佑费只扣一次（在总账层面），拆分时不再扣除。
     """
 
     def test_two_agents(self):
         # 租赁，录入人(10%)张三，维护人(10%)李四
-        # my_share = 1000*20% = 200
+        # my_share = 1000*20% = 200, beike=16, store_income=184
+        # 按我方占比分配: 张三=10%/20%=50%, 李四=10%/20%=50%
         result = calc_seller_commission(
             property_type=RENTAL,
             total_amount=1000,
@@ -215,22 +217,23 @@ class TestSellerAgentShares:
         )
         assert len(result.agent_shares) == 2
 
-        # 张三(10%): 200×10%=20, 20×8%=1.6, 20-1.6=18.4, 18.4×50%=9.2
+        # 张三(10%): 184×(10%/20%)=92, 92×50%=46
         zhang = result.agent_shares[0]
         assert zhang.name == "张三"
         assert zhang.role_rate == 0.10
-        assert zhang.my_share == 20.0
-        assert zhang.commission == 9.2
+        assert zhang.my_share == 92.0
+        assert zhang.commission == 46.0
 
         # 李四(10%): 同上
         li = result.agent_shares[1]
         assert li.name == "李四"
         assert li.role_rate == 0.10
-        assert li.commission == 9.2
+        assert li.commission == 46.0
 
     def test_three_agents(self):
         # 买卖，录入人(10%)张三，维护人(15%)李四，钥匙人(5%)王五
-        # my_share = 10000*30% = 3000
+        # my_share = 10000*30% = 3000, beike=240, store_income=2760
+        # 按我方占比: 张三=10%/30%, 李四=15%/30%, 王五=5%/30%
         result = calc_seller_commission(
             property_type=SALE,
             total_amount=10000,
@@ -239,23 +242,23 @@ class TestSellerAgentShares:
         )
         assert len(result.agent_shares) == 3
 
-        # 张三(10%): 3000×10%=300, 300×8%=24, 300-24=276, 276×50%=138
+        # 张三(10%): 2760×(10%/30%)=920, 920×50%=460
         zhang = result.agent_shares[0]
         assert zhang.name == "张三"
         assert zhang.role_rate == 0.10
-        assert zhang.commission == 138.0
+        assert zhang.commission == 460.0
 
-        # 李四(15%): 3000×15%=450, 450×8%=36, 450-36=414, 414×50%=207
+        # 李四(15%): 2760×(15%/30%)=1380, 1380×50%=690
         li = result.agent_shares[1]
         assert li.name == "李四"
         assert li.role_rate == 0.15
-        assert li.commission == 207.0
+        assert li.commission == 690.0
 
-        # 王五(5%): 3000×5%=150, 150×8%=12, 150-12=138, 138×50%=69
+        # 王五(5%): 2760×(5%/30%)=460, 460×50%=230
         wang = result.agent_shares[2]
         assert wang.name == "王五"
         assert wang.role_rate == 0.05
-        assert wang.commission == 69.0
+        assert wang.commission == 230.0
 
 
 class TestBuyerAgentShares:
@@ -263,12 +266,16 @@ class TestBuyerAgentShares:
 
     成交人兼任房源方角色时，角色可能分属不同业务员。
     客源成交人角色自动分配给名为"成交人"的业务员。
+    8%德佑费只扣一次（在总账层面），拆分时不再扣除。
     """
 
     def test_buyer_with_role_agents(self):
         # 租赁，成交人兼任录入人(10%)+维护人(10%)
         # 录入人→张三，维护人→李四，客源成交人(85%)→成交人
         # total_received = 847×2 = 1694
+        # beike_fee = 135.52, store_income = 1558.48
+        # 录入人份额=200, 扣8%后=184; 维护人份额=200, 扣8%后=184
+        # 成交人份额=1694-400=1294, 扣8%后=1190.48
         result = calc_buyer_commission(
             property_type=RENTAL,
             owner_amount=1000,
@@ -280,21 +287,21 @@ class TestBuyerAgentShares:
         )
         assert len(result.agent_shares) == 3
 
-        # 成交人(85%): 1694×0.85=1439.9, ×8%=115.19, 1439.9-115.19=1324.71, ×50%=662.36
+        # 成交人(85%): 进店1190.48, ×50%=595.24
         buyer = next(s for s in result.agent_shares if s.name == "成交人")
         assert "客源成交人" in buyer.roles
         assert buyer.role_rate == 0.85
-        assert buyer.commission == 662.36
+        assert buyer.commission == 595.24
 
-        # 张三(10%): 1694×0.10=169.4, ×8%=13.55, 169.4-13.55=155.85, ×50%=77.92
+        # 张三(10%): 进店184, ×50%=92
         zhang = next(s for s in result.agent_shares if s.name == "张三")
         assert zhang.role_rate == 0.10
-        assert zhang.commission == 77.92
+        assert zhang.commission == 92.0
 
         # 李四(10%): 同张三
         li = next(s for s in result.agent_shares if s.name == "李四")
         assert li.role_rate == 0.10
-        assert li.commission == 77.92
+        assert li.commission == 92.0
 
     def test_no_agent_roles_backward_compat(self):
         # 不传 agent_roles 时，agent_shares 只有一条总记录

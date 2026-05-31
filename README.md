@@ -7,7 +7,7 @@
 - 两种房源类型：租赁 / 买卖
 - 两种计算视角：成交人（我店成交它店房源）/ 房源方（它店成交我店房源）
 - 6步计算流程：理房通平台费 → 角色业绩拆分 → 实收佣金 → 德佑平台服务费 → 进店实收 → 业务员应发
-- 多业务员拆分：当本店有2个以上业务员分别持有不同角色时，按角色比例分别计算每人应发佣金
+- 多业务员拆分：按角色占我方份额的比例分配进店业绩，8%德佑费只扣一次
 - 买卖房源3%平台实勘费作为独立平台角色：从成交人份额扣除、永不属门店、不可勾选/不参与业务员拆分
 - 成交人兼任房源方角色时自动调整占比
 - 8种支付方式的快捷选择
@@ -44,7 +44,7 @@
 
 ### 提成规则
 
-- 德佑平台服务费：实收佣金 × 8%
+- 德佑平台服务费：实收佣金 × 8%（只扣一次，拆分时不再扣除）
 - 业务员提成：进店实收 × 50%
 
 ## 安装
@@ -78,34 +78,34 @@ uv run commission-gui
 ## 开发
 
 ```bash
-uv run pytest          # 运行测试（34个用例）
-uv run pytest -v       # 详细输出
-uv run python -m commission  # CLI入口
-uv run commission-gui       # GUI入口
+uv run pytest # 运行测试（34个用例）
+uv run pytest -v # 详细输出
+uv run python -m commission # CLI入口
+uv run commission-gui # GUI入口
 ```
 
 ## 项目结构
 
 ```
 cw-project/
-├── pyproject.toml          # 项目配置
-├── cw-project.md           # 业务需求文档
+├── pyproject.toml # 项目配置
+├── cw-project.md # 业务需求文档
 ├── src/commission/
 │   ├── __init__.py
-│   ├── config.py           # 费率、角色比例等常量
-│   ├── calculator.py       # 纯计算逻辑（无IO）
-│   ├── cli.py              # 交互式命令行入口
-│   └── gui/                # PySide6 图形界面
-│       ├── app.py          # GUI入口
-│       ├── wizard.py       # 向导主窗口
-│       └── steps/          # 各步骤页面
-│           ├── step_type.py     # 房源类型+视角
-│           ├── step_payment.py  # 支付信息
-│           ├── step_roles.py    # 角色归属
-│           ├── step_split.py    # 拆分设置
-│           └── step_result.py   # 结果展示
+│   ├── config.py # 费率、角色比例等常量
+│   ├── calculator.py # 纯计算逻辑（无IO）
+│   ├── cli.py # 交互式命令行入口
+│   └── gui/ # PySide6 图形界面
+│       ├── app.py # GUI入口
+│       ├── wizard.py # 向导主窗口
+│       └── steps/ # 各步骤页面
+│           ├── step_type.py # 房源类型+视角
+│           ├── step_payment.py # 支付信息
+│           ├── step_roles.py # 角色归属
+│           ├── step_split.py # 拆分设置
+│           └── step_result.py # 结果展示
 └── tests/
     ├── __init__.py
-    ├── test_calculator.py  # 计算逻辑单元测试
-    └── test_gui.py         # GUI 展示/交互单元测试
+    ├── test_calculator.py # 计算逻辑单元测试
+    └── test_gui.py # GUI 展示/交互单元测试
 ```
