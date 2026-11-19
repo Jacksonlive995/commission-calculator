@@ -1,4 +1,6 @@
-# 佣金计算器
+# 佣金计算器（Commission Calculator）
+
+项目目录：`commission-calculator`。GitHub 仓库：https://github.com/Jacksonlive995/commission-calculator。
 
 房产中介佣金计算工具（CLI + 图形界面）。输入房源信息、支付金额和角色归属，自动完成 6 步分账计算并输出每笔明细，支持一键写入飞书多维表格。
 
@@ -101,21 +103,27 @@ CLI / GUI 通用流程：
 
 ### 打包为 Windows 可执行文件
 
+在 Windows 上执行：
+
 ```bash
-uv run pyinstaller --onefile --windowed --name "佣金计算器" --noconfirm \
-  --hidden-import commission --hidden-import commission.config \
-  --hidden-import commission.calculator --hidden-import commission.feishu \
-  --hidden-import commission.gui --hidden-import commission.gui.app \
-  --hidden-import commission.gui.wizard \
-  --hidden-import commission.gui.steps.step_type \
-  --hidden-import commission.gui.steps.step_payment \
-  --hidden-import commission.gui.steps.step_roles \
-  --hidden-import commission.gui.steps.step_split \
-  --hidden-import commission.gui.steps.step_result \
-  src/commission/gui/launch.py
+uv sync --locked --group dev
+uv run --frozen pyinstaller --noconfirm --clean "佣金计算器.spec"
 ```
 
-生成的 `dist/佣金计算器.exe` 可直接双击运行，无需安装 Python。`.env` 文件需与 exe 放在同一目录。图标与打包配置已收口到 `assets/app.ico` 和 `佣金计算器.spec`。
+生成的 `dist/佣金计算器.exe` 可直接双击运行，无需安装 Python。需要写入飞书时，将配置好的 `.env` 文件放在 exe 同目录。图标与打包配置位于 `assets/app.ico` 和 `佣金计算器.spec`。
+
+### 使用 GitHub Actions 自动编译
+
+工作流配置位于 `.github/workflows/build.yml`。推送到 `main`、向 `main` 提交 Pull Request，或在 GitHub 的 **Actions → Build → Run workflow** 手动触发，都会在 Windows x64 上执行：
+
+1. 安装 Python 3.12 和锁定的开发依赖
+2. 运行全部测试（Qt 使用无显示器模式）
+3. 构建 Python 源码包和 wheel，再使用 `佣金计算器.spec` 打包 Windows 程序
+4. 上传 `commission-calculator-windows-x64` 构建产物，保留 30 天
+
+在成功的运行页面下方 **Artifacts** 下载并解压 `commission-calculator-windows-x64`，即可双击 `佣金计算器.exe`。需要写入飞书时，将同目录的 `.env.example` 复制为 `.env`，填写自己的 App ID 和 App Secret。
+
+编译无需配置飞书凭证；构建产物只包含配置示例。
 
 ## 最终使用说明
 
@@ -125,27 +133,30 @@ uv run pyinstaller --onefile --windowed --name "佣金计算器" --noconfirm \
 - **命令行**：执行 `uv run commission`
 - **图形界面**：执行 `uv run commission-gui`
 - **飞书写入**：先准备 `.env`，再在结果页点击写入
-- **打包后运行**：把 `.env` 放到 exe 同目录，再双击 exe
+- **打包后运行**：双击 exe；需要写入飞书时再把 `.env` 放到 exe 同目录
 
 常见问题：
 
 - **飞书写入失败**：先检查 `.env` 里是否配置了 `FEISHU_APP_ID` 和 `FEISHU_APP_SECRET`
-- **打包后打不开**：先确认 exe 同目录是否有 `.env`
+- **打包后飞书写入失败**：确认 exe 同目录的 `.env` 已填写正确的飞书凭证
 - **结果和文档不一致**：以 `docs/business-rules.md` 为准，`cw-project.md` 只保留原始记录
 
 ## 开发
 
 ```bash
-uv run pytest # 运行测试（45 个用例）
+uv run pytest tests # 运行项目测试
 uv run pytest -v # 详细输出
-uv run python -m commission # CLI 入口
+uv run commission # CLI 入口
 uv run commission-gui # GUI 入口
 ```
 
 ## 项目结构
 
 ```
-cw-project/
+commission-calculator/
+├── .github/workflows/build.yml # GitHub Actions 测试与 Windows 打包
+├── 佣金计算器.spec # PyInstaller 打包配置
+├── assets/app.ico # 应用图标
 ├── pyproject.toml # 项目配置
 ├── cw-project.md # 原始业务需求文档
 ├── docs/
