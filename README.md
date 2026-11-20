@@ -125,6 +125,24 @@ uv run --frozen pyinstaller --noconfirm --clean "佣金计算器.spec"
 
 编译无需配置飞书凭证；构建产物只包含配置示例。
 
+### 自动发布到 GitHub Releases
+
+推送 `v` 开头的版本标签（例如 `v0.2.0`）后，Actions 会校验标签与 `pyproject.toml` 的版本一致，运行测试并打包 Windows 程序。构建成功后，自动创建对应的 [GitHub Release](https://github.com/Jacksonlive995/commission-calculator/releases)，上传以下附件：
+
+- `commission-calculator-windows-x64.exe`：可直接运行的 Windows x64 程序
+- `env.example`：飞书配置示例，使用时复制为 EXE 同目录的 `.env`
+- `commission-calculator-v0.2.0-windows-x64.zip`：包含 `佣金计算器.exe` 和 `.env.example`，文件名随版本变化
+
+Release 附件会长期保留。普通推送到 `main` 会运行测试和编译；发布正式版本时，推送对应的版本标签：
+
+```bash
+# 项目版本为 0.2.0，且代码已提交并推送到 main 时
+git tag -a v0.2.0 -m "Release v0.2.0"
+git push origin v0.2.0
+```
+
+每个版本使用一个新标签。发布后续版本时，先更新 `pyproject.toml` 的版本号，执行 `uv lock` 并提交、推送版本修改，再推送对应标签（例如 `v0.2.1`）。发布使用 GitHub 自动提供的令牌，无需额外配置个人访问令牌。
+
 ## 最终使用说明
 
 如果你只想“先跑起来”，按下面做就够了：
@@ -154,7 +172,7 @@ uv run commission-gui # GUI 入口
 
 ```
 commission-calculator/
-├── .github/workflows/build.yml # GitHub Actions 测试与 Windows 打包
+├── .github/workflows/build.yml # GitHub Actions 测试、Windows 打包与 Release 发布
 ├── 佣金计算器.spec # PyInstaller 打包配置
 ├── assets/app.ico # 应用图标
 ├── pyproject.toml # 项目配置

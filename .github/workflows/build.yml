@@ -3,6 +3,7 @@ name: Build
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -27,10 +28,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Set up Python and uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.11.7"
           python-version: "3.12"
@@ -39,6 +40,21 @@ jobs:
 
       - name: Install locked dependencies
         run: uv sync --locked --group dev
+
+      - name: Validate release version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          @'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+          tag = os.environ["GITHUB_REF_NAME"]
+          if tag != f"v{version}":
+              raise SystemExit(f"Tag {tag} does not match project version {version}; expected v{version}.")
+          print(f"Release version verified: {tag}")
+          '@ | uv run --frozen python -
 
       - name: Run tests
         run: uv run --frozen pytest -q tests
@@ -55,10 +71,76 @@ jobs:
           Copy-Item "dist/佣金计算器.exe", ".env.example" -Destination dist/windows-package
 
       - name: Upload Windows package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: commission-calculator-windows-x64
           path: dist/windows-package/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
+
+  release:
+    name: Publish GitHub Release
+    needs: windows
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+
+    steps:
+      - name: Download tested Windows package
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: commission-calculator-windows-x64
+          path: release-assets
+
+      - name: Verify executable and prepare release ZIP
+        run: |
+          python3 - <<'PY'
+          import os
+          import shutil
+          from pathlib import Path
+          from zipfile import ZIP_DEFLATED, ZipFile
+
+          assets = Path("release-assets")
+          exe = assets / "佣金计算器.exe"
+          example = assets / ".env.example"
+          if not example.is_file():
+              raise SystemExit("The configuration example is missing.")
+          with exe.open("rb") as file:
+              if file.read(2) != b"MZ":
+                  raise SystemExit("The artifact is not a Windows executable.")
+              file.seek(0x3C)
+              pe_offset = int.from_bytes(file.read(4), "little")
+              file.seek(pe_offset)
+              if file.read(6) != b"PE\0\0\x64\x86":
+                  raise SystemExit("The executable is not Windows x64.")
+          shutil.copyfile(exe, assets / "commission-calculator-windows-x64.exe")
+          shutil.copyfile(example, assets / "env.example")
+          archive = assets / f"commission-calculator-{os.environ['GITHUB_REF_NAME']}-windows-x64.zip"
+          with ZipFile(archive, "w", ZIP_DEFLATED) as package:
+              package.write(exe, exe.name)
+              package.write(example, example.name)
+          print(f"Verified Windows x64 executable; prepared {archive.name}")
+          PY
+
+      - name: Publish release and download attachments
+        uses: softprops/action-gh-release@v3.0.4
+        with:
+          token: ${{ github.token }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          body: |
+            Windows x64 版本。下载 ZIP 并解压后，双击 `佣金计算器.exe` 即可运行，无需安装 Python。
+
+            也可单独下载 `commission-calculator-windows-x64.exe` 运行。
+
+            需要写入飞书时，将配置示例（ZIP 中的 `.env.example` 或单独下载的 `env.example`）复制为 EXE 同目录的 `.env`，填写自己的 App ID 和 App Secret。
+          files: |
+            release-assets/commission-calculator-windows-x64.exe
+            release-assets/env.example
+            release-assets/commission-calculator-*-windows-x64.zip
